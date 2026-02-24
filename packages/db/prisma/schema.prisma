@@ -14,9 +14,40 @@ datasource db {
 }
 
 model User {
+  id          String       @id @default(uuid())
+  username    String
+  email       String       @unique
+  password    String
+  createdAt   DateTime     @default(now())
+  ownedRooms  Room[]       @relation("RoomOwner")
+  memberships RoomMember[]
+}
+
+model Room {
+  id          String       @id @default(uuid())
+  slug        String       @unique
+  ownerId     String
+  owner       User         @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  canvasState Json         @default("{}")
+  members     RoomMember[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model RoomMember {
   id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
+  userId    String
+  roomId    String
+  role      RoomRole
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@unique([userId, roomId])
+}
+
+enum RoomRole {
+  OWNER
+  EDITOR
+  VIEWER
 }

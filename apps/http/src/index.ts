@@ -1,15 +1,17 @@
-import prisma from "@repo/db/client";
 import express from "express";
-import { loginSchema } from "@repo/schemas/types";
+import cookieParser from "cookie-parser";
 
-const app=express();
+import authRoute from "./routes/auth.route";
+import roomRoutes from "./routes/room.route";
+import { middleware } from "./middleware/middleware";
 
-app.get("/",async (req,res)=>{
-    const user=await prisma.user.findFirst();
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
 
-    res.json(user);
-})
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/room", middleware, roomRoutes);
 
-app.listen(3000,()=>{
+app.listen(3000, () => {
     console.log("Server is running on port 3000");
 })
