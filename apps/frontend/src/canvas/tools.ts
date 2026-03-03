@@ -1,13 +1,13 @@
-import type { DrawingElement,Point } from "./types/canvas";
+import type { DrawingElementSchema, PointSchema } from "@repo/schemas/types";
 
 export type ToolContext = {
-  elementsRef: React.RefObject<DrawingElement[]>;
-  drawingElement: React.RefObject<DrawingElement | null>;
-  startPosition: React.RefObject<Point>;
+  elementsRef: React.RefObject<DrawingElementSchema[]>;
+  drawingElement: React.RefObject<DrawingElementSchema | null>;
+  startPosition: React.RefObject<PointSchema>;
   panRef: React.RefObject<{ x: number; y: number }>;
   zoomRef: React.RefObject<number>;
   isPanning: boolean;
-  setIsPanning:React.Dispatch<React.SetStateAction<boolean>>
+  setIsPanning: React.Dispatch<React.SetStateAction<boolean>>
   draw: () => void;
   history: {
     snapshot: () => void;
@@ -18,13 +18,13 @@ export type ToolContext = {
 
 export type ToolHandlers = {
   onMouseDown?: (
-    p: Point,
+    p: PointSchema,
     ctx: ToolContext,
     rawEvent?: React.MouseEvent<HTMLCanvasElement>
   ) => void;
 
   onMouseMove?: (
-    p: Point,
+    p: PointSchema,
     ctx: ToolContext,
     rawEvent?: React.MouseEvent<HTMLCanvasElement>
   ) => void;

@@ -1,6 +1,6 @@
-import { useRef,useState,useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { ToolHandlers } from "./tools";
-import type {ElementType,DrawingElement } from "./types/canvas";
+import type { ElementTypeSchema, DrawingElementSchema } from "@repo/schemas/types";
 import { useCanvasSetup } from "./useCanvasSetp";
 import { drawElement } from "./draw";
 import { arrowTool } from "./tools/arrow";
@@ -17,16 +17,16 @@ import { useCanvasCursor } from "./useCanvasCursor";
 import { useHistory } from "./useHistory";
 
 type CanvasProps = {
-  activeTool: ElementType;
+  activeTool: ElementTypeSchema;
 };
 
 function Canvas({ activeTool }: CanvasProps) {
 
-  const canvasRef=useRef<HTMLCanvasElement|null>(null);
-  const ctxRef=useRef<CanvasRenderingContext2D|null>(null);
-  const startPosition=useRef({x:0,y:0});
-  const drawingElement=useRef<DrawingElement|null>(null);
-  const elementsRef=useRef<DrawingElement[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const startPosition = useRef({ x: 0, y: 0 });
+  const drawingElement = useRef<DrawingElementSchema | null>(null);
+  const elementsRef = useRef<DrawingElementSchema[]>([]);
   const zoomRef = useRef(1);
   const panRef = useRef({ x: 0, y: 0 });
   const dprRef = useRef(1);
@@ -67,9 +67,9 @@ function Canvas({ activeTool }: CanvasProps) {
   }, []);
 
 
-  useCanvasSetup(canvasRef,ctxRef,dprRef);
+  useCanvasSetup(canvasRef, ctxRef, dprRef);
 
-  useCanvasCursor({canvasRef,activeTool,isPanning:isPanning,});
+  useCanvasCursor({ canvasRef, activeTool, isPanning: isPanning, });
 
 
   const { startTextInput } = useTextTool({
@@ -80,7 +80,7 @@ function Canvas({ activeTool }: CanvasProps) {
     onCommit: draw,
   });
 
-  const TOOL_REGISTRY: Record<ElementType, ToolHandlers> = {
+  const TOOL_REGISTRY: Record<ElementTypeSchema, ToolHandlers> = {
     rect: rectTool,
     ellipse: ellipseTool,
     diamond: diamondTool,
@@ -131,7 +131,7 @@ function Canvas({ activeTool }: CanvasProps) {
     }
   }
 
-  const handleMouseDown=(event: React.MouseEvent<HTMLCanvasElement>)=>{
+  const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const p = getMousePos(event);
     const tool = getActiveTool();
     if (activeTool === "text") {
@@ -143,13 +143,13 @@ function Canvas({ activeTool }: CanvasProps) {
     tool?.onMouseDown?.(p, toolCtx, event);
   }
 
-  const handleMouseMove=(event: React.MouseEvent<HTMLCanvasElement>)=>{
+  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const p = getMousePos(event);
     const tool = getActiveTool();
     tool?.onMouseMove?.(p, toolCtx, event);
   }
 
-  const handleMouseUp=(event: React.MouseEvent<HTMLCanvasElement>)=>{
+  const handleMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const tool = getActiveTool();
     tool?.onMouseUp?.(toolCtx, event);
   }
@@ -169,8 +169,8 @@ function Canvas({ activeTool }: CanvasProps) {
 
     newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
 
-    panRef.current.x =mouseX - ((mouseX - panRef.current.x) / oldZoom) * newZoom;
-    panRef.current.y =mouseY - ((mouseY - panRef.current.y) / oldZoom) * newZoom;
+    panRef.current.x = mouseX - ((mouseX - panRef.current.x) / oldZoom) * newZoom;
+    panRef.current.y = mouseY - ((mouseY - panRef.current.y) / oldZoom) * newZoom;
 
     zoomRef.current = newZoom;
     draw();
@@ -189,12 +189,12 @@ function Canvas({ activeTool }: CanvasProps) {
   return (
     <>
       <div className="absolute bg-white flex mt-50">
-        <button className="py-2 px-2 border-2 border-solid" onClick={() => { setZoom(zoomRef.current * 1.2)}}>+</button>
+        <button className="py-2 px-2 border-2 border-solid" onClick={() => { setZoom(zoomRef.current * 1.2) }}>+</button>
         <button className="py-2 px-2 border-2 border-solid" onClick={() => { setZoom(zoomRef.current / 1.2) }}>-</button>
       </div>
-      <canvas 
-        ref={canvasRef} 
-        className="h-screen w-full bg-black" 
+      <canvas
+        ref={canvasRef}
+        className="h-screen w-full bg-black"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

@@ -1,11 +1,11 @@
 import { useRef } from "react";
-import type { Point,DrawingElement } from "./types/canvas";
+import type { DrawingElementSchema, PointSchema } from "@repo/schemas/types";
 
 type UseTextToolParams = {
-  canvasRef: React.RefObject<HTMLCanvasElement|null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   zoomRef: React.RefObject<number>;
   panRef: React.RefObject<{ x: number; y: number }>;
-  elementsRef: React.RefObject<DrawingElement[]>;
+  elementsRef: React.RefObject<DrawingElementSchema[]>;
   onCommit?: () => void;
 };
 export function useTextTool({
@@ -16,9 +16,9 @@ export function useTextTool({
   onCommit,
 }: UseTextToolParams) {
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const textPositionRef = useRef<Point | null>(null);
-  const keydownRef = useRef<(e: KeyboardEvent) => void|null>(null);
-  const blurRef = useRef<() => void|null>(null);
+  const textPositionRef = useRef<PointSchema | null>(null);
+  const keydownRef = useRef<(e: KeyboardEvent) => void | null>(null);
+  const blurRef = useRef<() => void | null>(null);
 
   function commitText() {
     const textarea = textInputRef.current;
@@ -42,11 +42,11 @@ export function useTextTool({
     textarea.remove();
     textInputRef.current = null;
     textPositionRef.current = null;
-    
+
     onCommit?.();
   }
 
-  function startTextInput(p: Point) {
+  function startTextInput(p: PointSchema) {
     if (textInputRef.current) {
       commitText();
       return;
@@ -68,13 +68,13 @@ export function useTextTool({
     textarea.style.color = "white";
     textarea.style.font = "16px sans-serif";
     textarea.style.padding = "4px";
-    textarea.style.border = "none"; 
+    textarea.style.border = "none";
     textarea.style.borderRadius = "4px";
     textarea.style.zIndex = "9999";
     textarea.style.resize = "none";
-    textarea.style.outline = "none";      
-    textarea.style.boxShadow = "none";  
-    textarea.style.padding = "0";   
+    textarea.style.outline = "none";
+    textarea.style.boxShadow = "none";
+    textarea.style.padding = "0";
 
     document.body.appendChild(textarea);
     textarea.focus();
