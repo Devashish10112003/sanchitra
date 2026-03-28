@@ -1,1 +1,1 @@
-{"root":["./src/index.ts"],"version":"5.9.2"}
+{"root":["./src/handlers.ts","./src/index.ts","./src/router.ts","./src/infra/eventbus.ts","./src/state/connectionmanager.ts","./src/state/roommanager.ts","./src/transport/messaagefactory.ts","./src/transport/sender.ts"],"version":"5.9.2"}

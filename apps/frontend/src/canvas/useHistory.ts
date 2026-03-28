@@ -1,9 +1,9 @@
 import { useRef } from "react";
-import type { DrawingElement } from "./types/canvas";
+import type { DrawingElementSchema } from "@repo/schemas/types";
 
-export function useHistory(elementsRef: React.RefObject<DrawingElement[]>) {
-  const past = useRef<DrawingElement[][]>([]);
-  const future = useRef<DrawingElement[][]>([]);
+export function useHistory(elementsRef: React.RefObject<DrawingElementSchema[]>) {
+  const past = useRef<DrawingElementSchema[][]>([]);
+  const future = useRef<DrawingElementSchema[][]>([]);
 
   function snapshot() {
     // deep clone (important!)

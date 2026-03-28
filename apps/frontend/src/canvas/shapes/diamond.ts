@@ -1,6 +1,6 @@
-import type { DrawingElement } from "../types/canvas";
+import type { DrawingElementSchema } from "@repo/schemas/types";
 
-export function drawDiamond(ctx: CanvasRenderingContext2D, el: DrawingElement) {
+export function drawDiamond(ctx: CanvasRenderingContext2D, el: DrawingElementSchema) {
     const cx = el.x + el.width! / 2;
     const cy = el.y + el.height! / 2;
 

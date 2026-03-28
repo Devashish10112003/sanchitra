@@ -1,80 +1,81 @@
-import type { Point,DrawingElement } from "./types/canvas";
+import type { PointSchema, DrawingElementSchema } from "@repo/schemas/types";
 
-function isPointInRect(p: Point, el: DrawingElement) {
-    const x1 = Math.min(el.x, el.x + el.width!);
-    const y1 = Math.min(el.y, el.y + el.height!);
-    const x2 = Math.max(el.x, el.x + el.width!);
-    const y2 = Math.max(el.y, el.y + el.height!);
 
-    return p.x >= x1 && p.x <= x2 && p.y >= y1 && p.y <= y2;
-  }
+function isPointInRect(p: PointSchema, el: DrawingElementSchema) {
+  const x1 = Math.min(el.x, el.x + el.width!);
+  const y1 = Math.min(el.y, el.y + el.height!);
+  const x2 = Math.max(el.x, el.x + el.width!);
+  const y2 = Math.max(el.y, el.y + el.height!);
 
-function isPointInEllipse(p: Point, el: DrawingElement) {
-    const rx = Math.abs(el.width! / 2);
-    const ry = Math.abs(el.height! / 2);
-    const cx = el.x + el.width! / 2;
-    const cy = el.y + el.height! / 2;
+  return p.x >= x1 && p.x <= x2 && p.y >= y1 && p.y <= y2;
+}
 
-    return (
-      ((p.x - cx) ** 2) / (rx ** 2) +
-      ((p.y - cy) ** 2) / (ry ** 2)
-      <= 1
-    );
-  }
+function isPointInEllipse(p: PointSchema, el: DrawingElementSchema) {
+  const rx = Math.abs(el.width! / 2);
+  const ry = Math.abs(el.height! / 2);
+  const cx = el.x + el.width! / 2;
+  const cy = el.y + el.height! / 2;
 
-function distanceToSegment(p: Point, a: Point, b: Point) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
+  return (
+    ((p.x - cx) ** 2) / (rx ** 2) +
+    ((p.y - cy) ** 2) / (ry ** 2)
+    <= 1
+  );
+}
 
-    const t =
-      ((p.x - a.x) * dx + (p.y - a.y) * dy) /
-      (dx * dx + dy * dy);
+function distanceToSegment(p: PointSchema, a: PointSchema, b: PointSchema) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
 
-    const clamped = Math.max(0, Math.min(1, t));
-    const x = a.x + clamped * dx;
-    const y = a.y + clamped * dy;
+  const t =
+    ((p.x - a.x) * dx + (p.y - a.y) * dy) /
+    (dx * dx + dy * dy);
 
-    return Math.hypot(p.x - x, p.y - y);
-  }
+  const clamped = Math.max(0, Math.min(1, t));
+  const x = a.x + clamped * dx;
+  const y = a.y + clamped * dy;
 
-function isPointNearLine(p: Point, el: DrawingElement) {
-    const [a, b] = el.points!;
-    return distanceToSegment(p, a, b) < 6; // eraser radius
-  }
+  return Math.hypot(p.x - x, p.y - y);
+}
 
-function isPointNearFreehand(p: Point, el: DrawingElement) {
-    const pts = el.points!;
-    for (let i = 0; i < pts.length - 1; i++) {
-      if (distanceToSegment(p, pts[i], pts[i + 1]) < 6) {
-        return true;
-      }
-    }
-    return false;
-  }
+function isPointNearLine(p: PointSchema, el: DrawingElementSchema) {
+  const [a, b] = el.points!;
+  return distanceToSegment(p, a, b) < 6; // eraser radius
+}
 
-export  function isPointOnElement(p: Point, el: DrawingElement) {
-    switch (el.type) {
-      case "rect":
-      case "diamond":
-        return isPointInRect(p, el);
-
-      case "ellipse":
-        return isPointInEllipse(p, el);
-
-      case "line":
-      case "arrow":
-        return isPointNearLine(p, el);
-
-      case "freehand":
-        return isPointNearFreehand(p, el);
-
-      case "text":
-        return isPointInRect(
-          p,
-          { ...el, width: 40, height: 20 }
-        );
-
-      default:
-        return false;
+function isPointNearFreehand(p: PointSchema, el: DrawingElementSchema) {
+  const pts = el.points!;
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (distanceToSegment(p, pts[i], pts[i + 1]) < 6) {
+      return true;
     }
   }
+  return false;
+}
+
+export function isPointOnElement(p: PointSchema, el: DrawingElementSchema) {
+  switch (el.type) {
+    case "rect":
+    case "diamond":
+      return isPointInRect(p, el);
+
+    case "ellipse":
+      return isPointInEllipse(p, el);
+
+    case "line":
+    case "arrow":
+      return isPointNearLine(p, el);
+
+    case "freehand":
+      return isPointNearFreehand(p, el);
+
+    case "text":
+      return isPointInRect(
+        p,
+        { ...el, width: 40, height: 20 }
+      );
+
+    default:
+      return false;
+  }
+}

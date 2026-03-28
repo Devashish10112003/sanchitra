@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import type { ElementType } from "./types/canvas";
+import type { ElementTypeSchema } from "@repo/schemas/types";
 
 type Params = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  activeTool: ElementType;
+  activeTool: ElementTypeSchema;
   isPanning?: boolean;
 };
 
