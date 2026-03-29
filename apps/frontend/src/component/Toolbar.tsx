@@ -1,9 +1,9 @@
-import type { ElementType } from "../canvas/types/canvas";
+import type { ElementTypeSchema } from "@repo/schemas/types";
 import {IconSquare,IconCircle,IconSquareRotated,IconPencil,IconTypography,IconArrowNarrowRight,IconMinus,IconHandStop,IconEraser} from "@tabler/icons-react";
 
 
 type ToolbarProps = {
-  onSelectTool: (tool: ElementType) => void;
+  onSelectTool: (tool: ElementTypeSchema) => void;
 };
 
 export function Toolbar({onSelectTool }: ToolbarProps) {

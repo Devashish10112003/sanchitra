@@ -2,7 +2,7 @@ import { ServerWSMessage } from "@repo/schemas/types";
 
 export function createServerMessage(
     type: ServerWSMessage["data"]["type"],
-    payload: any,
+    payload: unknown,
     meta: { roomId: string; userId: string }
 ): ServerWSMessage {
     return {
@@ -11,6 +11,6 @@ export function createServerMessage(
         data: {
             type,
             payload,
-        },
+        } as ServerWSMessage["data"],
     };
 }
