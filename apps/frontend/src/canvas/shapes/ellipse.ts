@@ -1,18 +1,10 @@
 import type { DrawingElementSchema } from "@repo/schemas/types";
+import type { RoughCanvas } from "roughjs/bin/canvas";
+import { roughOptionsFor } from "../style";
 
-export function drawEllipse(ctx: CanvasRenderingContext2D, el: DrawingElementSchema) {
+export function drawEllipse(rc: RoughCanvas, el: DrawingElementSchema) {
   const cx = el.x + el.width! / 2;
   const cy = el.y + el.height! / 2;
 
-  ctx.beginPath();
-  ctx.ellipse(
-    cx,
-    cy,
-    Math.abs(el.width! / 2),
-    Math.abs(el.height! / 2),
-    0,
-    0,
-    Math.PI * 2
-  );
-  ctx.stroke();
+  rc.ellipse(cx, cy, Math.abs(el.width!), Math.abs(el.height!), roughOptionsFor(el));
 }

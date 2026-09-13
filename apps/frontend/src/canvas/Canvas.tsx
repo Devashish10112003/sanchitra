@@ -15,13 +15,19 @@ import { textTool } from "./tools/text";
 import { useTextTool } from "./useTextTool";
 import { useCanvasCursor } from "./useCanvasCursor";
 import { useHistory } from "./useHistory";
+import { useCollabSocket } from "../ws/useCollabSocket";
+import { dotGridStyle } from "../theme";
+import { drawRemoteCursor } from "./remoteCursor";
+import type { ElementStyle } from "./style";
 
 type CanvasProps = {
   activeTool: ElementTypeSchema;
+  style: ElementStyle;
+  roomId: string;
+  userId: string;
 };
 
-function Canvas({ activeTool }: CanvasProps) {
-
+function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const startPosition = useRef({ x: 0, y: 0 });
@@ -32,8 +38,91 @@ function Canvas({ activeTool }: CanvasProps) {
   const dprRef = useRef(1);
   const [isPanning, setIsPanning] = useState(false);
   const history = useHistory(elementsRef);
+  const remoteCursorsRef = useRef<Map<string, { x: number; y: number; username: string }>>(
+    new Map()
+  );
+  const cursorMoveCountRef = useRef(0);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [zoomPercent, setZoomPercent] = useState(100);
   const MIN_ZOOM = 0.1;
   const MAX_ZOOM = 30;
+
+  function draw() {
+    const canvas = canvasRef.current!;
+    const ctx = ctxRef.current!;
+    const dpr = dprRef.current;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.setTransform(
+      dpr * zoomRef.current,
+      0,
+      0,
+      dpr * zoomRef.current,
+      dpr * panRef.current.x,
+      dpr * panRef.current.y
+    );
+
+    for (const el of elementsRef.current) {
+      drawElement(canvas, ctx, el);
+    }
+
+    if (drawingElement.current) {
+      drawElement(canvas, ctx, drawingElement.current);
+    }
+
+    remoteCursorsRef.current.forEach((pos, cursorUserId) => {
+      drawRemoteCursor(
+        canvas,
+        ctx,
+        pos.x,
+        pos.y,
+        cursorUserId,
+        pos.username,
+        1 / zoomRef.current
+      );
+    });
+  }
+
+  const collab = useCollabSocket(roomId, userId, {
+    onRoomState: (elements) => {
+      elementsRef.current = elements;
+      draw();
+    },
+    onElementCreated: (element) => {
+      elementsRef.current.push(element);
+      draw();
+    },
+    onElementUpdated: (element) => {
+      const index = elementsRef.current.findIndex((el) => el.id === element.id);
+      if (index === -1) elementsRef.current.push(element);
+      else elementsRef.current[index] = element;
+      draw();
+    },
+    onElementDeleted: (elementId) => {
+      elementsRef.current = elementsRef.current.filter((el) => el.id !== elementId);
+      draw();
+    },
+    onUserJoined: (joinedUserId) => {
+      setOnlineUsers((prev) => new Set(prev).add(joinedUserId));
+    },
+    onUserLeft: (leftUserId) => {
+      remoteCursorsRef.current.delete(leftUserId);
+      setOnlineUsers((prev) => {
+        const next = new Set(prev);
+        next.delete(leftUserId);
+        return next;
+      });
+      draw();
+    },
+    onCursorUpdate: (cursorUserId, username, x, y) => {
+      remoteCursorsRef.current.set(cursorUserId, { x, y, username });
+      draw();
+    },
+  });
+
   const toolCtx = {
     elementsRef,
     drawingElement,
@@ -44,6 +133,11 @@ function Canvas({ activeTool }: CanvasProps) {
     setIsPanning,
     draw,
     history,
+    style,
+    collab: {
+      onElementCreate: collab.sendElementCreate,
+      onElementDelete: collab.sendElementDelete,
+    },
   };
 
   useEffect(() => {
@@ -51,13 +145,11 @@ function Canvas({ activeTool }: CanvasProps) {
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "z") {
           e.preventDefault();
-          history.undo();
-          draw();
+          collab.sendUndo();
         }
         if (e.key === "y" || (e.shiftKey && e.key === "z")) {
           e.preventDefault();
-          history.redo();
-          draw();
+          collab.sendRedo();
         }
       }
     };
@@ -77,7 +169,9 @@ function Canvas({ activeTool }: CanvasProps) {
     zoomRef,
     panRef,
     elementsRef,
+    style,
     onCommit: draw,
+    onElementCreate: collab.sendElementCreate,
   });
 
   const TOOL_REGISTRY: Record<ElementTypeSchema, ToolHandlers> = {
@@ -104,33 +198,6 @@ function Canvas({ activeTool }: CanvasProps) {
     };
   }
 
-  function draw() {
-    const canvas = canvasRef.current!;
-    const ctx = ctxRef.current!;
-    const dpr = dprRef.current;
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.setTransform(
-      dpr * zoomRef.current,
-      0,
-      0,
-      dpr * zoomRef.current,
-      dpr * panRef.current.x,
-      dpr * panRef.current.y
-    );
-
-    for (const el of elementsRef.current) {
-      drawElement(ctx, el);
-    }
-
-    if (drawingElement.current) {
-      drawElement(ctx, drawingElement.current);
-    }
-  }
-
   const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const p = getMousePos(event);
     const tool = getActiveTool();
@@ -145,6 +212,12 @@ function Canvas({ activeTool }: CanvasProps) {
 
   const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const p = getMousePos(event);
+
+    cursorMoveCountRef.current += 1;
+    if (cursorMoveCountRef.current % 3 === 0) {
+      collab.sendCursorMove(p.x, p.y);
+    }
+
     const tool = getActiveTool();
     tool?.onMouseMove?.(p, toolCtx, event);
   }
@@ -173,11 +246,13 @@ function Canvas({ activeTool }: CanvasProps) {
     panRef.current.y = mouseY - ((mouseY - panRef.current.y) / oldZoom) * newZoom;
 
     zoomRef.current = newZoom;
+    setZoomPercent(Math.round(newZoom * 100));
     draw();
   }
 
   function setZoom(next: number) {
     zoomRef.current = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    setZoomPercent(Math.round(zoomRef.current * 100));
     draw();
   }
 
@@ -188,13 +263,32 @@ function Canvas({ activeTool }: CanvasProps) {
 
   return (
     <>
-      <div className="absolute bg-white flex mt-50">
-        <button className="py-2 px-2 border-2 border-solid" onClick={() => { setZoom(zoomRef.current * 1.2) }}>+</button>
-        <button className="py-2 px-2 border-2 border-solid" onClick={() => { setZoom(zoomRef.current / 1.2) }}>-</button>
+      <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1 rounded-2xl border border-[#e0dfff] bg-white p-1.5 shadow-[0_4px_16px_rgba(105,101,219,0.18)]">
+        <button
+          type="button"
+          title="Zoom out"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-lg text-[#1e1e1e] hover:bg-[#f5f5f9]"
+          onClick={() => setZoom(zoomRef.current / 1.2)}
+        >
+          −
+        </button>
+        <span className="w-12 text-center text-sm font-medium text-[#1e1e1e]">{zoomPercent}%</span>
+        <button
+          type="button"
+          title="Zoom in"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-lg text-[#1e1e1e] hover:bg-[#f5f5f9]"
+          onClick={() => setZoom(zoomRef.current * 1.2)}
+        >
+          +
+        </button>
+      </div>
+      <div className="absolute right-4 top-4 z-20 rounded-2xl border border-[#e0dfff] bg-white px-3 py-1.5 text-sm text-[#1e1e1e] shadow-[0_4px_16px_rgba(105,101,219,0.18)]">
+        {collab.isConnected ? `${onlineUsers.size + 1} online` : "Connecting…"}
       </div>
       <canvas
         ref={canvasRef}
-        className="h-screen w-full bg-black"
+        className="h-screen w-full bg-[#fafafa]"
+        style={dotGridStyle}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

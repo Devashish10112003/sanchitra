@@ -9,6 +9,7 @@ export const lineTool: ToolHandlers = {
       x: p.x,
       y: p.y,
       points: [{ x: p.x, y: p.y }, { x: p.x, y: p.y }],
+      ...ctx.style,
     };
   },
 
@@ -24,6 +25,7 @@ export const lineTool: ToolHandlers = {
     if (!ctx.drawingElement.current) return;
 
     ctx.elementsRef.current.push(ctx.drawingElement.current);
+    ctx.collab?.onElementCreate(ctx.drawingElement.current);
     ctx.drawingElement.current = null;
     ctx.draw();
   },

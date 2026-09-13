@@ -82,6 +82,7 @@ const ServerMessageSchema = z.discriminatedUnion("type", [
         type: z.literal("CURSOR_UPDATE"),
         payload: z.object({
             userId: z.string(),
+            username: z.string(),
             x: z.number(),
             y: z.number(),
         }),

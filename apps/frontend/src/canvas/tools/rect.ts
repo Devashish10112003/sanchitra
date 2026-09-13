@@ -10,6 +10,7 @@ export const rectTool: ToolHandlers = {
       y: p.y,
       width: 0,
       height: 0,
+      ...ctx.style,
     };
     ctx.startPosition.current = p;
   },
@@ -25,6 +26,7 @@ export const rectTool: ToolHandlers = {
   onMouseUp(ctx) {
     if (!ctx.drawingElement.current) return;
     ctx.elementsRef.current.push(ctx.drawingElement.current);
+    ctx.collab?.onElementCreate(ctx.drawingElement.current);
     ctx.drawingElement.current = null;
     ctx.draw();
   },

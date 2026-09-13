@@ -4,6 +4,7 @@ import type { WebSocket } from "ws";
 import {
     attachUser,
     cleanupConnection,
+    getUsername,
     isSocketInRoom,
     subscribeSocketToRoom,
     trackRoom,
@@ -88,7 +89,7 @@ async function onRoomJoin(socket: WebSocket, message: ClientWSMessage) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true },
+        select: { id: true, username: true },
     });
 
     if (!user) return;
@@ -96,7 +97,7 @@ async function onRoomJoin(socket: WebSocket, message: ClientWSMessage) {
     const hasAccess = await ensureRoomAccess(roomId, userId);
     if (!hasAccess) return;
 
-    attachUser(socket, userId);
+    attachUser(socket, userId, user.username);
     trackRoom(socket, roomId);
     await subscribeSocketToRoom(roomId, socket);
     addSocketToRoom(roomId, socket);
@@ -211,7 +212,12 @@ async function onCursorMove(socket: WebSocket, message: ClientWSMessage) {
 
     const outgoing = createServerMessage(
         "CURSOR_UPDATE",
-        { userId: message.userId, x: message.data.payload.x, y: message.data.payload.y },
+        {
+            userId: message.userId,
+            username: getUsername(socket) ?? message.userId,
+            x: message.data.payload.x,
+            y: message.data.payload.y,
+        },
         { roomId, userId: message.userId }
     );
     await broadcastToRoom(roomId, outgoing, { excludeSocket: socket });

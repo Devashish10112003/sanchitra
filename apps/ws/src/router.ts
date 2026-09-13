@@ -1,6 +1,7 @@
 import { ClientWSMessageSchema } from "@repo/schemas/types";
 import type { RawData, WebSocket } from "ws";
 import { routeMessage } from "./handlers";
+import { getUserId } from "./state/connectionManager";
 
 function rawToString(raw: RawData): string {
     if (typeof raw === "string") return raw;
@@ -20,5 +21,8 @@ export async function handleIncomingMessage(socket: WebSocket, raw: RawData) {
     const parsed = ClientWSMessageSchema.safeParse(parsedJson);
     if (!parsed.success) return;
 
-    await routeMessage(socket, parsed.data);
+    const authenticatedUserId = getUserId(socket);
+    if (!authenticatedUserId) return;
+
+    await routeMessage(socket, { ...parsed.data, userId: authenticatedUserId });
 }

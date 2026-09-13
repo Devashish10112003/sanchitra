@@ -114,6 +114,7 @@ export class PubSubManager {
 
 const socketToId = new Map<WebSocket, string>();
 const socketToUser = new Map<WebSocket, string>();
+const socketToUsername = new Map<WebSocket, string>();
 const socketToRooms = new Map<WebSocket, Set<string>>();
 
 export function registerConnection(socket: WebSocket) {
@@ -125,8 +126,17 @@ export function getSocketId(socket: WebSocket): string | undefined {
     return socketToId.get(socket);
 }
 
-export function attachUser(socket: WebSocket, userId: string) {
+export function attachUser(socket: WebSocket, userId: string, username: string = userId) {
     socketToUser.set(socket, userId);
+    socketToUsername.set(socket, username);
+}
+
+export function getUserId(socket: WebSocket): string | undefined {
+    return socketToUser.get(socket);
+}
+
+export function getUsername(socket: WebSocket): string | undefined {
+    return socketToUsername.get(socket);
 }
 
 export function trackRoom(socket: WebSocket, roomId: string) {
@@ -171,6 +181,7 @@ export function cleanupConnection(socket: WebSocket): { userId?: string; roomIds
 
     socketToId.delete(socket);
     socketToUser.delete(socket);
+    socketToUsername.delete(socket);
     socketToRooms.delete(socket);
 
     return { userId, roomIds };

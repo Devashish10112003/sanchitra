@@ -11,6 +11,7 @@ export const ellipseTool: ToolHandlers = {
       y: p.y,
       width: 0,
       height: 0,
+      ...ctx.style,
     };
     ctx.startPosition.current = p;
   },
@@ -28,6 +29,7 @@ export const ellipseTool: ToolHandlers = {
     if (!ctx.drawingElement.current) return;
 
     ctx.elementsRef.current.push(ctx.drawingElement.current);
+    ctx.collab?.onElementCreate(ctx.drawingElement.current);
     ctx.drawingElement.current = null;
     ctx.draw();
   },

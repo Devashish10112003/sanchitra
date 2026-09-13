@@ -1,4 +1,5 @@
 import type { DrawingElementSchema, PointSchema } from "@repo/schemas/types";
+import type { ElementStyle } from "./style";
 
 export type ToolContext = {
   elementsRef: React.RefObject<DrawingElementSchema[]>;
@@ -9,10 +10,15 @@ export type ToolContext = {
   isPanning: boolean;
   setIsPanning: React.Dispatch<React.SetStateAction<boolean>>
   draw: () => void;
+  style: ElementStyle;
   history: {
     snapshot: () => void;
     undo: () => void;
     redo: () => void;
+  };
+  collab?: {
+    onElementCreate: (element: DrawingElementSchema) => void;
+    onElementDelete: (elementId: string) => void;
   };
 };
 

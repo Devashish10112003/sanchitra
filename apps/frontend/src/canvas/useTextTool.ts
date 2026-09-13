@@ -1,19 +1,24 @@
 import { useRef } from "react";
 import type { DrawingElementSchema, PointSchema } from "@repo/schemas/types";
+import type { ElementStyle } from "./style";
 
 type UseTextToolParams = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   zoomRef: React.RefObject<number>;
   panRef: React.RefObject<{ x: number; y: number }>;
   elementsRef: React.RefObject<DrawingElementSchema[]>;
+  style: ElementStyle;
   onCommit?: () => void;
+  onElementCreate?: (element: DrawingElementSchema) => void;
 };
 export function useTextTool({
   canvasRef,
   zoomRef,
   panRef,
   elementsRef,
+  style,
   onCommit,
+  onElementCreate,
 }: UseTextToolParams) {
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
   const textPositionRef = useRef<PointSchema | null>(null);
@@ -28,13 +33,17 @@ export function useTextTool({
     const value = textarea.value.trim();
 
     if (value) {
-      elementsRef.current.push({
+      const element: DrawingElementSchema = {
         id: crypto.randomUUID(),
         type: "text",
         x: pos.x,
         y: pos.y,
         text: value,
-      });
+        strokeColor: style.strokeColor,
+        opacity: style.opacity,
+      };
+      elementsRef.current.push(element);
+      onElementCreate?.(element);
     }
 
     textarea.removeEventListener("keydown", keydownRef.current!);
@@ -65,7 +74,8 @@ export function useTextTool({
     textarea.style.left = `${screenX}px`;
     textarea.style.top = `${screenY}px`;
     textarea.style.background = "transparent";
-    textarea.style.color = "white";
+    textarea.style.color = style.strokeColor;
+    textarea.style.opacity = String(style.opacity / 100);
     textarea.style.font = "16px sans-serif";
     textarea.style.padding = "4px";
     textarea.style.border = "none";
