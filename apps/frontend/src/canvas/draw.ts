@@ -8,6 +8,7 @@ import { drawFreehand } from "./shapes/freehand";
 import { drawLine } from "./shapes/line";
 import { drawRect } from "./shapes/rect";
 import { drawText } from "./shapes/text";
+import type { Bounds } from "./hitTest";
 
 export function drawElement(
   canvas: HTMLCanvasElement,
@@ -45,5 +46,36 @@ export function drawElement(
       break;
   }
 
+  ctx.restore();
+}
+
+const SELECTION_COLOR = "#6965db";
+
+/** Dashed outline + corner handles around the selected element. `scale` = 1 / zoom keeps it a constant on-screen size. */
+export function drawSelection(ctx: CanvasRenderingContext2D, b: Bounds, scale: number) {
+  const pad = 6 * scale;
+  const x = b.x - pad;
+  const y = b.y - pad;
+  const w = b.width + pad * 2;
+  const h = b.height + pad * 2;
+
+  ctx.save();
+  ctx.strokeStyle = SELECTION_COLOR;
+  ctx.lineWidth = 1 * scale;
+  ctx.setLineDash([4 * scale, 3 * scale]);
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#ffffff";
+  const hs = 8 * scale;
+  for (const [cx, cy] of [
+    [x, y],
+    [x + w, y],
+    [x, y + h],
+    [x + w, y + h],
+  ]) {
+    ctx.fillRect(cx - hs / 2, cy - hs / 2, hs, hs);
+    ctx.strokeRect(cx - hs / 2, cy - hs / 2, hs, hs);
+  }
   ctx.restore();
 }

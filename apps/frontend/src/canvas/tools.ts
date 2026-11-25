@@ -10,6 +10,8 @@ export type ToolContext = {
   isPanning: boolean;
   setIsPanning: React.Dispatch<React.SetStateAction<boolean>>
   draw: () => void;
+  selectedIdRef: React.RefObject<string | null>;
+  dragRef: React.RefObject<{ last: PointSchema; moved: boolean } | null>;
   style: ElementStyle;
   history: {
     snapshot: () => void;
@@ -18,6 +20,7 @@ export type ToolContext = {
   };
   collab?: {
     onElementCreate: (element: DrawingElementSchema) => void;
+    onElementUpdate: (element: DrawingElementSchema) => void;
     onElementDelete: (elementId: string) => void;
   };
 };

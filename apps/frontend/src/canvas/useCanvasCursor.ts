@@ -25,6 +25,10 @@ export function useCanvasCursor({
         canvas.style.cursor = "text";
         break;
 
+      case "select":
+        canvas.style.cursor = "default";
+        break;
+
       case "eraser":
         canvas.style.cursor = "crosshair";
         break;

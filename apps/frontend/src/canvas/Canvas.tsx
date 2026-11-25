@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import type { ToolHandlers } from "./tools";
 import type { ElementTypeSchema, DrawingElementSchema } from "@repo/schemas/types";
 import { useCanvasSetup } from "./useCanvasSetp";
-import { drawElement } from "./draw";
+import { drawElement, drawSelection } from "./draw";
+import { getElementBounds } from "./hitTest";
 import { arrowTool } from "./tools/arrow";
 import { diamondTool } from "./tools/diamond";
 import { ellipseTool } from "./tools/ellipse";
@@ -11,6 +12,7 @@ import { freehandTool } from "./tools/freehand";
 import { handTool } from "./tools/hand";
 import { lineTool } from "./tools/line";
 import { rectTool } from "./tools/rect";
+import { selectTool } from "./tools/select";
 import { textTool } from "./tools/text";
 import { useTextTool } from "./useTextTool";
 import { useCanvasCursor } from "./useCanvasCursor";
@@ -33,6 +35,8 @@ function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
   const startPosition = useRef({ x: 0, y: 0 });
   const drawingElement = useRef<DrawingElementSchema | null>(null);
   const elementsRef = useRef<DrawingElementSchema[]>([]);
+  const selectedIdRef = useRef<string | null>(null);
+  const dragRef = useRef<{ last: { x: number; y: number }; moved: boolean } | null>(null);
   const zoomRef = useRef(1);
   const panRef = useRef({ x: 0, y: 0 });
   const dprRef = useRef(1);
@@ -71,6 +75,13 @@ function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
 
     if (drawingElement.current) {
       drawElement(canvas, ctx, drawingElement.current);
+    }
+
+    const selected = selectedIdRef.current
+      ? elementsRef.current.find((el) => el.id === selectedIdRef.current)
+      : undefined;
+    if (selected) {
+      drawSelection(ctx, getElementBounds(selected), 1 / zoomRef.current);
     }
 
     remoteCursorsRef.current.forEach((pos, cursorUserId) => {
@@ -132,10 +143,13 @@ function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
     isPanning,
     setIsPanning,
     draw,
+    selectedIdRef,
+    dragRef,
     history,
     style,
     collab: {
       onElementCreate: collab.sendElementCreate,
+      onElementUpdate: collab.sendElementUpdate,
       onElementDelete: collab.sendElementDelete,
     },
   };
@@ -158,6 +172,15 @@ function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+
+  // Drop the selection when switching away from the select tool.
+  useEffect(() => {
+    if (activeTool !== "select" && selectedIdRef.current) {
+      selectedIdRef.current = null;
+      dragRef.current = null;
+      draw();
+    }
+  }, [activeTool]);
 
   useCanvasSetup(canvasRef, ctxRef, dprRef);
 
@@ -184,6 +207,7 @@ function Canvas({ activeTool, style, roomId, userId }: CanvasProps) {
     hand: handTool,
     eraser: eraserTool,
     text: textTool(startTextInput),
+    select: selectTool,
   };
 
   function getMousePos(e: React.MouseEvent<HTMLCanvasElement>) {

@@ -13,7 +13,7 @@ type PropertiesPanelProps = {
   onChange: (patch: Partial<ElementStyle>) => void;
 };
 
-const HIDDEN_TOOLS: ElementTypeSchema[] = ["hand", "eraser"];
+const HIDDEN_TOOLS: ElementTypeSchema[] = ["hand", "eraser", "select"];
 const NO_BACKGROUND_TOOLS: ElementTypeSchema[] = ["line", "arrow", "freehand", "text"];
 const EDGE_TOOLS: ElementTypeSchema[] = ["rect", "diamond"];
 

@@ -9,6 +9,7 @@ import {
   IconMinus,
   IconHandStop,
   IconEraser,
+  IconPointer,
 } from "@tabler/icons-react";
 
 type ToolbarProps = {
@@ -17,6 +18,7 @@ type ToolbarProps = {
 };
 
 const TOOLS: { type: ElementTypeSchema; label: string; icon: typeof IconSquare }[] = [
+  { type: "select", label: "Select & move", icon: IconPointer },
   { type: "hand", label: "Pan", icon: IconHandStop },
   { type: "rect", label: "Rectangle", icon: IconSquare },
   { type: "diamond", label: "Diamond", icon: IconSquareRotated },

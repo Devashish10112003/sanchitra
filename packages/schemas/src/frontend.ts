@@ -5,7 +5,7 @@ export const pointSchema = z.object({
     y: z.number()
 })
 
-export const elementTypeSchema = z.enum(["rect", "ellipse", "line", "arrow", "diamond", "freehand", "text", "hand", "eraser"]);
+export const elementTypeSchema = z.enum(["rect", "ellipse", "line", "arrow", "diamond", "freehand", "text", "hand", "eraser", "select"]);
 
 export const strokeStyleSchema = z.enum(["solid", "dashed", "dotted"]);
 export const sloppinessSchema = z.enum(["architect", "artist", "cartoonist"]);
